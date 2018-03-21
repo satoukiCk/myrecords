@@ -2,6 +2,7 @@
 
 import os
 from inspect import isclass
+import tablib
 
 from collections import OrderedDict
 
@@ -67,5 +68,23 @@ class Record(object):
 
         return OrderedDict(items) if ordered else dict(items)
 
+    @property
+    def dataset(self):
+        data = tablib.Dataset()
+        data.headers = self.keys()
+
+        row = _reduce_datetimes(self.values())
+        data.append(row)
+
+        return data
+
+    def export(self, format, **kwargs):
+        self.dataset.export(format, **kwargs)
 
 
+def _reduce_datetimes(row):
+    row = list(row)
+    for i in range(len(row)):
+        if hasattr(row[i],'isoformat'):
+            row[i] = row[i].isoformat()
+    return tuple(row)
