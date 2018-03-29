@@ -82,6 +82,21 @@ class Record(object):
         self.dataset.export(format, **kwargs)
 
 
+class RecordCollection:
+    def __init__(self, rows):
+        self._rows = rows
+        self._all_rows = []
+        self.pending = True
+
+    def __repr__(self):
+        return '<RecordCollection size={} pending={}>'.format(len(self), self.pending)
+
+    def __iter__(self):
+
+    def __len__(self):
+        return len(self._all_rows)
+
+
 def _reduce_datetimes(row):
     row = list(row)
     for i in range(len(row)):
