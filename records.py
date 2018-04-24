@@ -166,6 +166,50 @@ class RecordCollection:
     def as_dict(self, ordered=False):
         return self.all(as_dict=not ordered, as_ordereddict=ordered)
 
+    def first(self, default=None, as_dict=False, as_orderreddict=False):
+        try:
+            record = self[0]
+        except IndexError:
+            if isexception(default):
+                raise default
+            return default
+
+        if as_dict:
+            return self.as_dict()
+        if as_orderreddict:
+            return self.as_dict(ordered=True)
+        else:
+            return record
+
+    def one(self, default=None, as_dict=False, as_orderreddict=False):
+        try:
+            record = self[0]
+        except IndexError:
+            if isexception(default):
+                raise default
+            return default
+
+        try:
+            self[1]
+        except IndexError:
+            pass
+        else:
+            raise ValueError("'RecordCollection contained more than one row. '\
+                             'Expects only one row when using '\
+                             'RecordCollection.one'")
+
+        if as_dict:
+            return self.as_dict()
+        if as_orderreddict:
+            return self.as_dict(ordered=True)
+        else:
+            return record
+
+    def scalar(self, default=None):
+        row = self.one()
+        return row[0] if row else default
+
+
 
 def _reduce_datetimes(row):
     row = list(row)
@@ -173,3 +217,4 @@ def _reduce_datetimes(row):
         if hasattr(row[i],'isoformat'):
             row[i] = row[i].isoformat()
     return tuple(row)
+
