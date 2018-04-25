@@ -5,7 +5,7 @@ from inspect import isclass
 import tablib
 
 from collections import OrderedDict
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exc, inspect, text
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -136,9 +136,6 @@ class RecordCollection:
             return rows[0]
         return RecordCollection(iter(rows))
 
-    def __len__(self):
-        return len(self._all_rows)
-
     def export(self, format, **kwargs):
         return self.dataset.export(format, **kwargs)
 
@@ -224,6 +221,19 @@ class Database(object):
     def close(self):
         self._engine.dispose()
         self.open = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __repr__(self):
+        return 'Database open={}'.format(self.open)
+
+    def get_table_names(self, internal=False):
+        return inspect(self._engine).get_table_names()
+    
 
 def _reduce_datetimes(row):
     row = list(row)
