@@ -5,6 +5,7 @@ from inspect import isclass
 import tablib
 
 from collections import OrderedDict
+from sqlalchemy import create_engine
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -210,6 +211,19 @@ class RecordCollection:
         return row[0] if row else default
 
 
+class Database(object):
+    def __init__(self, db_url=None, **kwargs):
+        self.db_url = db_url or DATABASE_URL
+
+        if not self.db_url:
+            raise ValueError("You must provide a db_url.")
+
+        self._engine = create_engine(self.db_url, **kwargs)
+        self.open = True
+
+    def close(self):
+        self._engine.dispose()
+        self.open = False
 
 def _reduce_datetimes(row):
     row = list(row)
