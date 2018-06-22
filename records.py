@@ -4,6 +4,7 @@ import os
 from inspect import isclass
 import tablib
 
+from contextlib import contextmanager
 from collections import OrderedDict
 from sqlalchemy import create_engine, exc, inspect, text
 
@@ -233,7 +234,43 @@ class Database(object):
 
     def get_table_names(self, internal=False):
         return inspect(self._engine).get_table_names()
-    
+
+    def get_connection(self):
+        if not self.open:
+            raise exc.ResourceClosedError("Database Closed")
+
+        return Connection(self._engine.connect())
+
+    def query(self, query, fetchall=False, **params):
+        with self.get_connection() as conn:
+            return conn.query(query, fetchall, **params)
+
+    def bulk_query(self, query, *multiparams):
+        with self.get_connection() as conn:
+            conn.bank_query(query, *multiparams)
+
+    def query_file(self, path, fetchall=False, **params):
+        with self.get_connection() as conn:
+            return conn.query_file(path, fetchall, **params)
+
+    def bulk_query_file(self, path, *multiparams):
+        with self.get_connection() as conn:
+            conn.bulk_query_file(path, *multiparams)
+
+    @contextmanager
+    def transaction(self):
+        conn = self.get_connection()
+        tx = conn.transaction()
+
+        try:
+            yield conn
+            tx.commit()
+        except:
+            tx.rollback()
+        finally:
+            conn.close()
+
+
 
 def _reduce_datetimes(row):
     row = list(row)
